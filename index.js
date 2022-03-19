@@ -1,6 +1,8 @@
 const express = require("express");
 const app = express();
 
+// *** Built-in Error handler in express ***
+
 app.use((req, res, next) => {
     req.requestTime = Date.now();
     console.log(req.method, req.path);
@@ -12,13 +14,21 @@ const validateUser = (req, res, next) => {
     if (password === 'devlaka') {
         next();
     }
-    res.send('PASSWORD REQUIRED!');
+    // I am throwing error here.
+    // This will be caught by express.
+    throw new Error('PASSWORD REQUIRED!')
 };
 
 app.use('/about-us', (req, res, next) => {
     console.log("This middleware runs only for /about-us path");
     next();
 });
+
+// IF this route is called, a error will be thrown.
+// It will be handled by express.
+app.get('/error', (req, res) => {
+    console.lg();
+})
 
 app.get('/', (req, res) => {
     res.send("Homepage");
