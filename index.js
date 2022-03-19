@@ -1,7 +1,8 @@
 const express = require("express");
+const CustomError = require("./CustomError");
 const app = express();
 
-// *** Built-in Error handler in express ***
+// *** Custom Error class ***
 
 app.use((req, res, next) => {
     req.requestTime = Date.now();
@@ -16,7 +17,7 @@ const validateUser = (req, res, next) => {
     }
     // I am throwing error here.
     // This will be caught by express.
-    throw new Error('PASSWORD REQUIRED!')
+    throw new CustomError('PASSWORD REQUIRED!', 401)
 };
 
 app.use('/about-us', (req, res, next) => {
