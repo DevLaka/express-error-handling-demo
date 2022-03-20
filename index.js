@@ -4,7 +4,7 @@ const app = express();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// *** Handling Async Errors: Problem Definition ***
+// *** Handling Async Errors: A basic solution ***
 
 app.use((req, res, next) => {
     req.requestTime = Date.now();
@@ -63,17 +63,20 @@ app.get('/users', async (req, res) => {
 });
 
 // Async function
-app.get('/users/:id', async (req, res) => {
+app.get('/users/:id', async (req, res, next) => {
     const { id } = req.params;
     const userResult = await prisma.user.findUnique({
         where: { id: parseInt(id) },
         });
-    // Throwing an error inside async function throws an UnhandledPromiseRejectionWarning.
-    // Our error handling middleware will not catch this.
-    // Doesn't work as intended.
     if(!userResult) {
-        throw new CustomError('User no found', 404);
+        // next() will call the next middleware.
+        // But, next(err) will call the next error handling middleware.
+        // Error handling middleware will have the signature of (err, req, res, next).
+        return next(new CustomError('User not found', 404));
     }
+    // Calling next() without returning will call this statement.
+    // This cause "Cannot set headers after they are sent to the client" error.
+    // To prevent this, we have to return next() as above.
     res
         .status(200)
         .send(userResult);
