@@ -4,7 +4,7 @@ const app = express();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// *** Handling Async Errors: A more suitable solution ***
+// *** Handling Async Errors: A more suitable solution Improvement***
 // Sample request URL : http://localhost:8000/users/5000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 app.use((req, res, next) => {
     req.requestTime = Date.now();
@@ -19,6 +19,12 @@ const validateUser = (req, res, next) => {
     }
     throw new CustomError('PASSWORD REQUIRED!', 401)
 };
+
+function wrapAsync(fn){
+  return function(req, res, next) {
+    fn(req, res, next).catch(e => next(e));
+  } 
+}
 
 app.use('/about-us', (req, res, next) => {
     console.log("This middleware runs only for /about-us path");
@@ -46,42 +52,33 @@ app.get('/top-secret', validateUser, (req, res) => {
     res.send("Top Secret Data");
 });
 
-app.get('/users', async (req, res) => {
-    try {
-        const usersResult = await prisma.user.findMany();
-        res
-          .status(200)
-          .send(usersResult);
-      } catch (err) {
-        res
-        .status(500)
-        .send("Error getting list of users.");
-      }
-});
+app.get('/users', wrapAsync(async (req, res, next) => {
+      const usersResult = await prisma.user.findMany();
+      res
+        .status(200)
+        .send(usersResult);
+}));
 
 // Async function
-app.get('/users/:id', async (req, res, next) => {
+app.get('/users/:id', wrapAsync(async (req, res, next) => {
   const { id } = req.params;
-  try {
     const userResult = await prisma.user.findUnique({
       where: { id: parseInt(id) },
     });
     res
       .status(200)
       .send(userResult);
-  } catch(e) {
-    next(e);
-  }
-});
+}));
 
 app.use((req, res) => {
     res.status(404).send('Requested Resource Not Found!');
 });
 
 app.use((err, req, res, next) => {
-    const { status = 500, message = 'Error!' } = err;
+    const { status = 500 } = err;
+    console.log(err.message);
     console.log(err.stack);
-    res.status(status).send(message);
+    res.status(status).send("Error");
 });
 
 app.listen(8000, () => {
