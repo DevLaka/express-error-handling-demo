@@ -4,7 +4,7 @@ const app = express();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// *** Custom Error class ***
+// *** Handling Async Errors: Problem Definition ***
 
 app.use((req, res, next) => {
     req.requestTime = Date.now();
@@ -17,8 +17,9 @@ const validateUser = (req, res, next) => {
     if (password === 'devlaka') {
         next();
     }
-    // I am throwing error here.
-    // This will be caught by express.
+    // Validate user function is no async. Thus, throws this error.
+    // Our Error handling middleware will catch this.
+    // Works as intended.
     throw new CustomError('PASSWORD REQUIRED!', 401)
 };
 
@@ -27,8 +28,6 @@ app.use('/about-us', (req, res, next) => {
     next();
 });
 
-// IF this route is called, a error will be thrown.
-// It will be handled by express.
 app.get('/error', (req, res) => {
     console.lg();
 })
@@ -63,21 +62,21 @@ app.get('/users', async (req, res) => {
       }
 });
 
+// Async function
 app.get('/users/:id', async (req, res) => {
     const { id } = req.params;
-
-    try {
-        const userResult = await prisma.user.findUnique({
-            where: { id: parseInt(id) },
-          });
-        res
-          .status(200)
-          .send(userResult);
-      } catch (err) {
-        res
-        .status(500)
-        .send("Error getting the user.");
-      }
+    const userResult = await prisma.user.findUnique({
+        where: { id: parseInt(id) },
+        });
+    // Throwing an error inside async function throws an UnhandledPromiseRejectionWarning.
+    // Our error handling middleware will not catch this.
+    // Doesn't work as intended.
+    if(!userResult) {
+        throw new CustomError('User no found', 404);
+    }
+    res
+        .status(200)
+        .send(userResult);
 });
 
 app.use((req, res) => {
