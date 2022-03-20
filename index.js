@@ -52,6 +52,12 @@ app.use((req, res) => {
     res.status(404).send('Requested Resource Not Found!');
 });
 
+app.use((err, req, res, next) => {
+    const { status = 500, message = 'Error!' } = err;
+    console.log(err.stack);
+    res.status(status).send(message);
+});
+
 app.listen(8000, () => {
     console.log("App is running on port 8000");
 });
