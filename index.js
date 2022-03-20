@@ -1,7 +1,7 @@
 const express = require("express");
 const CustomError = require("./CustomError");
 const app = express();
-const { PrismaClient } = require('@prisma/client')
+const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 // *** Custom Error class ***
@@ -60,6 +60,23 @@ app.get('/users', async (req, res) => {
         res
         .status(500)
         .send("Error getting list of users.");
+      }
+});
+
+app.get('/users/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const userResult = await prisma.user.findUnique({
+            where: { id: parseInt(id) },
+          });
+        res
+          .status(200)
+          .send(userResult);
+      } catch (err) {
+        res
+        .status(500)
+        .send("Error getting the user.");
       }
 });
 
