@@ -1,6 +1,8 @@
 const express = require("express");
 const CustomError = require("./CustomError");
 const app = express();
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient();
 
 // *** Custom Error class ***
 
@@ -46,6 +48,19 @@ app.get('/private', validateUser, (req, res) => {
 
 app.get('/top-secret', validateUser, (req, res) => {
     res.send("Top Secret Data");
+});
+
+app.get('/users', async (req, res) => {
+    try {
+        const usersResult = await prisma.user.findMany();
+        res
+          .status(200)
+          .send(usersResult);
+      } catch (err) {
+        res
+        .status(500)
+        .send("Error getting list of users.");
+      }
 });
 
 app.use((req, res) => {
